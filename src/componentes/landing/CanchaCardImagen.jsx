@@ -6,7 +6,7 @@ export default function CanchaCardImagen({ imagen, nombre }) {
       src={`data:image/jpeg;base64,${imagen}`}
       alt={nombre}
       className="img-fluid rounded-3"
-      style={{ width: 200, height: 130, objectFit: 'cover', border: '2px solid var(--color-primary-light)', objectPosition: 'center', background: 'var(--color-primary-light)' }}
+      style={{ width: '70%', height: 130, objectFit: 'cover', border: '2px solid var(--color-primary-light)', objectPosition: 'center', background: 'var(--color-primary-light)', margin: '10 auto' }}
     />
   ) : (
     <div className="bg-light d-flex align-items-center justify-content-center rounded-3" style={{ width: 200, height: 130, border: '2px solid var(--color-primary-light)', background: 'var(--color-primary-light)' }}>

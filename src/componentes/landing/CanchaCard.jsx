@@ -18,7 +18,7 @@ export default function CanchaCard({ cancha }) {
         transition: 'box-shadow 0.2s',
       }}
     >
-      <div style={{ minWidth: 200, maxWidth: 200 }} className="me-4 mb-3 mb-md-0">
+      <div style={{ minWidth: '70%', maxWidth: '70%', padding: '10 auto' }} className="me-4 mb-3 mb-md-0">
         <CanchaCardImagen imagen={cancha.imagen} nombre={cancha.nombre} />
       </div>
       <div className="flex-grow-1 d-flex flex-column flex-md-row align-items-md-center justify-content-between w-100">

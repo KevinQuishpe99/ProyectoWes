@@ -5,31 +5,40 @@ import Cancha from '../models/cancha.js';
 import TipoEspacio from '../models/tipoEspacio.js';
 import EstadoCancha from '../models/estadoCancha.js';
 import Feedback from '../models/feedback.js';
-import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
+dotenv.config();
+
+const generateToken = (id) =>{
+  return jwt.sign({id}, '12345678' , {expiresIn: '30d'})
+}
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { correo, contrasena } = req.body;
     
     console.log('=== LOGIN ATTEMPT ===');
-    console.log('Email recibido:', email);
-    console.log('Password recibido:', password);
+    console.log('Email recibido:', correo);
+    console.log('Password recibido:', contrasena);
     console.log('Body completo:', req.body);
     
     // Buscar usuario por correo
     const usuario = await Usuario.findOne({
-      where: { correo: email },
+      where: { correo },
       include: [{ model: Rol, as: 'rol' }]
     });
 
     console.log('Usuario encontrado:', usuario ? 'SÍ' : 'NO');
-    if (usuario) {
+
+    if (usuario && await bcrypt.compare(contrasena, usuario.contrasena)) {
       console.log('Datos del usuario:', {
         id: usuario.id,
         nombres: usuario.nombres,
         correo: usuario.correo,
         contrasena: usuario.contrasena ? 'EXISTE' : 'NO EXISTE',
-        rol: usuario.rol ? usuario.rol.nombre : 'NO TIENE ROL'
+        rol: usuario.rol ? usuario.rol.nombre : 'NO TIENE ROL',
+        token: generateToken(usuario.codigo)
       });
     }
 
@@ -41,9 +50,9 @@ export const login = async (req, res) => {
     // Verificar contraseña en texto plano
     console.log('Verificando contraseña...');
     console.log('Contraseña en BD:', usuario.contrasena);
-    console.log('Contraseña ingresada:', password);
+    console.log('Contraseña ingresada:', contrasena);
     
-    const passwordValida = password === usuario.contrasena;
+    const passwordValida = contrasena === usuario.contrasena;
     console.log('Contraseña válida:', passwordValida);
     
     if (!passwordValida) {
@@ -131,7 +140,7 @@ export const createUsuario = async (req, res) => {
       rol_id, 
       codigo 
     });
-    res.status(201).json(usuario);
+    res.status(201).json({usuario , token: generateToken(usuario.codigo)});
   } catch (err) {
     res.status(400).json({ message: err.message });
   }

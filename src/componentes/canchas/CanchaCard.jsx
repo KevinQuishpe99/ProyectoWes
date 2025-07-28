@@ -5,7 +5,7 @@ const CanchaCard = ({ cancha, onEdit, onDelete, modoUsuario, onReservar }) => {
     <div className="card bg-body h-100 shadow-sm rounded border-0">
       {cancha.imagen && typeof cancha.imagen === 'string' && (
         <img
-          src={`data:image/jpeg;base64,${cancha.imagen}`}
+          src={cancha.imagen}
           alt={cancha.nombre}
           className="card-img-top"
           style={{ objectFit: 'cover', height: 180 }}

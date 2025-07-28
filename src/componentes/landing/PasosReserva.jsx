@@ -28,6 +28,7 @@ export default function PasosReserva({ refProp }) {
       border: '1.5px solid var(--color-primary-light)',
       maxWidth: 900,
       margin: '0 auto',
+      marginBottom: 30,
       backdropFilter: 'blur(4px)',
     }}>
       <h4 className="fw-bold mb-4 text-center">
