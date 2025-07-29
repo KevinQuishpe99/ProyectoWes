@@ -18,10 +18,10 @@ export const protect = async (request, response, next) => {
                 
                 // Verificar el token
                 const decoded = jwt.verify(token, '12345678');
-                
+                console.log(decoded);
                 // Buscar al usuario
-                request.usuario = await Usuario.findOne({ id: decoded.id }).select('-contrasena');
-                
+                request.usuario = await Usuario.findOne({where: { codigo: decoded.id }}).select('-contrasena');
+                console.log(request.usuario);
                 // Continuar con la siguiente función middleware
                 next();
             } catch (error) {

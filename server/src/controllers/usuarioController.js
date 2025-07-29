@@ -52,14 +52,6 @@ export const login = async (req, res) => {
     console.log('Contraseña en BD:', usuario.contrasena);
     console.log('Contraseña ingresada:', contrasena);
     
-    const passwordValida = contrasena === usuario.contrasena;
-    console.log('Contraseña válida:', passwordValida);
-    
-    if (!passwordValida) {
-      console.log('ERROR: Contraseña incorrecta');
-      return res.status(401).json({ message: 'Correo o contraseña incorrectos' });
-    }
-
     // Devolver información del usuario (sin contraseña)
     const userData = {
       id: usuario.id,
@@ -67,7 +59,8 @@ export const login = async (req, res) => {
       correo: usuario.correo,
       codigo: usuario.codigo,
       rol: usuario.rol.nombre,
-      rol_id: usuario.rol_id
+      rol_id: usuario.rol_id,
+      token: generateToken(usuario.codigo)
     };
 
     console.log('LOGIN EXITOSO - Datos devueltos:', userData);
