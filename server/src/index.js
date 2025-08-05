@@ -8,13 +8,40 @@ import eventoRoutes from './routes/eventoRoutes.js';
 import feedbackRoutes from './routes/feedbackRoutes.js';
 import tipoEspacioRoutes from './routes/tipoEspacioRoutes.js';
 import cors from 'cors';
-import EstadoCancha from './models/estadoCancha.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
-// Aumentar el límite del body a 10mb
+
+// Configuración CORS - Permitir cualquier origen
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false
+}));
+
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Ruta raíz de la API
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'API de Gestión de Canchas EPN',
+    version: '1.0.0',
+    endpoints: {
+      roles: '/api/roles',
+      usuarios: '/api/usuarios',
+      canchas: '/api/canchas',
+      reservas: '/api/reservas',
+      eventos: '/api/eventos',
+      feedback: '/api/feedback',
+      tiposEspacio: '/api/tipos-espacio'
+    },
+    status: 'running'
+  });
+});
 
 // Rutas
 app.use('/api/roles', rolRoutes);
@@ -25,28 +52,22 @@ app.use('/api/eventos', eventoRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/tipos-espacio', tipoEspacioRoutes);
 
-// Endpoint para obtener los estados de cancha
-app.get('/api/estados-cancha', async (req, res) => {
-  try {
-    const estados = await EstadoCancha.findAll({ attributes: ['id', 'nombre'] });
-    res.json(estados);
-  } catch (err) {
-    res.status(500).json({ message: 'Error al obtener estados de cancha' });
-  }
-});
-
-// Conexión y arranque
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
+const SERVER_IP = process.env.SERVER_IP || '0.0.0.0';
 
 (async () => {
   try {
     await sequelize.authenticate();
-    await sequelize.sync(); // Crea las tablas si no existen
-    console.log('Conexión a la base de datos exitosa');
-    app.listen(PORT, () => {
-      console.log(`Servidor backend escuchando en http://localhost:${PORT}`);
+    await sequelize.sync();
+    console.log('✅ Base de datos conectada');
+    
+    app.listen(PORT, SERVER_IP, () => {
+      console.log(`🚀 Servidor corriendo en ${SERVER_IP}:${PORT}`);
+      console.log(`🌐 Web: http://localhost:5173`);
+      console.log(`📱 API: http://${SERVER_IP}:${PORT}/api`);
     });
   } catch (error) {
-    console.error('Error al conectar a la base de datos:', error);
+    console.error('❌ Error:', error);
+    process.exit(1);
   }
 })(); 

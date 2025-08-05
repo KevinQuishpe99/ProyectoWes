@@ -1,169 +1,192 @@
 import Usuario from '../models/usuario.js';
 import Rol from '../models/rol.js';
-import Reserva from '../models/reserva.js';
-import Cancha from '../models/cancha.js';
-import TipoEspacio from '../models/tipoEspacio.js';
-import EstadoCancha from '../models/estadoCancha.js';
-import Feedback from '../models/feedback.js';
 import bcrypt from 'bcrypt';
+import { generateToken } from '../config/jwt.js';
+import dotenv from 'dotenv';
 
-export const login = async (req, res) => {
+// Cargar variables de entorno
+dotenv.config();
+
+// Configuración de bcrypt desde variables de entorno
+const BCRYPT_SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
+
+// Función createUser con bcrypt (siguiendo el patrón de la imagen)
+export const createUser = async (req, res) => {
+  const { userName, email, password, codigo, rol_id } = req.body;
+  
+  if (!userName || !email || !password || !codigo || !rol_id) {
+    return res.status(400).json({ message: 'Missing fields, all are mandatory!' });
+  }
+
+  try {
+    // Verificar si el usuario ya existe
+    const userFound = await Usuario.findOne({ where: { correo: email } });
+    if (userFound) {
+      return res.status(400).json({ message: 'User already exist' });
+    }
+
+    // Encriptar contraseña con bcrypt
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Crear usuario
+    const nuevoUsuario = await Usuario.create({
+      nombres: userName,
+      correo: email,
+      contrasena: hashedPassword,
+      codigo: codigo,
+      rol_id: rol_id
+    });
+
+    // Generar token JWT
+    const token = generateToken({
+      id: nuevoUsuario.id,
+      nombres: nuevoUsuario.nombres,
+      correo: nuevoUsuario.correo,
+      codigo: nuevoUsuario.codigo,
+      rol_id: nuevoUsuario.rol_id
+    });
+
+    res.status(201).json({
+      email: nuevoUsuario.correo,
+      userName: nuevoUsuario.nombres,
+      id: nuevoUsuario.id,
+      token: token
+    });
+  } catch (error) {
+    console.error('Error al crear usuario:', error);
+    res.status(400).json({ message: 'Error interno del servidor' });
+  }
+};
+
+// Función loginUser con bcrypt (siguiendo el patrón de la imagen)
+export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    console.log('=== LOGIN ATTEMPT ===');
-    console.log('Email recibido:', email);
-    console.log('Password recibido:', password);
-    console.log('Body completo:', req.body);
-    
     // Buscar usuario por correo
-    const usuario = await Usuario.findOne({
+    const userFound = await Usuario.findOne({
       where: { correo: email },
       include: [{ model: Rol, as: 'rol' }]
     });
 
-    console.log('Usuario encontrado:', usuario ? 'SÍ' : 'NO');
-    if (usuario) {
-      console.log('Datos del usuario:', {
-        id: usuario.id,
-        nombres: usuario.nombres,
-        correo: usuario.correo,
-        contrasena: usuario.contrasena ? 'EXISTE' : 'NO EXISTE',
-        rol: usuario.rol ? usuario.rol.nombre : 'NO TIENE ROL'
+    // Verificar usuario y contraseña con bcrypt
+    if (userFound && (await bcrypt.compare(password, userFound.contrasena))) {
+      // Generar token JWT
+      const token = generateToken({
+        id: userFound.id,
+        nombres: userFound.nombres,
+        correo: userFound.correo,
+        codigo: userFound.codigo,
+        rol: userFound.rol?.nombre,
+        rol_id: userFound.rol_id
       });
+
+      res.json({
+        message: 'Login User',
+        email: userFound.correo,
+        userName: userFound.nombres,
+        id: userFound.id,
+        rol: userFound.rol?.nombre,
+        token: token
+      });
+    } else {
+      res.status(400).json({ message: 'Login Failed' });
     }
-
-    if (!usuario) {
-      console.log('ERROR: Usuario no encontrado');
-      return res.status(401).json({ message: 'Correo o contraseña incorrectos' });
-    }
-
-    // Verificar contraseña en texto plano
-    console.log('Verificando contraseña...');
-    console.log('Contraseña en BD:', usuario.contrasena);
-    console.log('Contraseña ingresada:', password);
-    
-    const passwordValida = password === usuario.contrasena;
-    console.log('Contraseña válida:', passwordValida);
-    
-    if (!passwordValida) {
-      console.log('ERROR: Contraseña incorrecta');
-      return res.status(401).json({ message: 'Correo o contraseña incorrectos' });
-    }
-
-    // Devolver información del usuario (sin contraseña)
-    const userData = {
-      id: usuario.id,
-      nombres: usuario.nombres,
-      correo: usuario.correo,
-      codigo: usuario.codigo,
-      rol: usuario.rol.nombre,
-      rol_id: usuario.rol_id
-    };
-
-    console.log('LOGIN EXITOSO - Datos devueltos:', userData);
-    console.log('=== FIN LOGIN ===');
-    
-    res.json(userData);
   } catch (err) {
     console.error('ERROR EN LOGIN:', err);
-    console.error('Stack trace:', err.stack);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
+// Función protectedAction para probar (siguiendo el patrón de la imagen)
+export const protectedAction = async (req, res) => {
+  try {
+    const loggedUser = await Usuario.findByPk(req.user.id);
+    res.status(200).json({
+      id: loggedUser.id,
+      userName: loggedUser.nombres,
+      email: loggedUser.correo
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener usuario' });
+  }
+};
+
+// Función para verificar autenticación
+export const verifyAuth = async (req, res) => {
+  try {
+    res.json({
+      user: req.user,
+      message: 'Token válido'
+    });
+  } catch (error) {
+    res.status(401).json({ message: 'Token inválido' });
+  }
+};
+
+// Otras funciones básicas
 export const getUsuarios = async (req, res) => {
-  const usuarios = await Usuario.findAll({
-    include: [
-      { model: Rol, as: 'rol' },
-      { model: Reserva, as: 'reservas', include: [
-        { model: Cancha, as: 'cancha', include: [
-          { model: TipoEspacio, as: 'tipoEspacio' },
-          { model: EstadoCancha, as: 'estadoCancha' }
-        ] }
-      ] },
-      { model: Feedback, as: 'feedbacks', include: [
-        { model: Cancha, as: 'cancha', include: [
-          { model: TipoEspacio, as: 'tipoEspacio' }
-        ] }
-      ] }
-    ]
-  });
-  res.json(usuarios);
+  try {
+    const usuarios = await Usuario.findAll({
+      include: [{ model: Rol, as: 'rol' }]
+    });
+    res.json(usuarios);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener usuarios' });
+  }
+};
+
+// Función para obtener usuarios básicos (público, para formularios)
+export const getUsuariosBasicos = async (req, res) => {
+  try {
+    const usuarios = await Usuario.findAll({
+      attributes: ['id', 'nombres', 'codigo'],
+      order: [['nombres', 'ASC']]
+    });
+    res.json(usuarios);
+  } catch (error) {
+    console.error('Error obteniendo usuarios básicos:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
 };
 
 export const getUsuario = async (req, res) => {
-  const { id } = req.params;
-  const usuario = await Usuario.findByPk(id, {
-    include: [
-      { model: Rol, as: 'rol' },
-      { model: Reserva, as: 'reservas', include: [
-        { model: Cancha, as: 'cancha', include: [
-          { model: TipoEspacio, as: 'tipoEspacio' },
-          { model: EstadoCancha, as: 'estadoCancha' }
-        ] }
-      ] },
-      { model: Feedback, as: 'feedbacks', include: [
-        { model: Cancha, as: 'cancha', include: [
-          { model: TipoEspacio, as: 'tipoEspacio' }
-        ] }
-      ] }
-    ]
-  });
-  if (!usuario) return res.status(404).json({ message: 'Usuario no encontrado' });
-  res.json(usuario);
-};
-
-export const createUsuario = async (req, res) => {
   try {
-    const { nombres, correo, contrasena, rol_id, codigo } = req.body;
-    const existe = await Usuario.findOne({ where: { codigo } });
-    if (existe) return res.status(400).json({ message: 'El código ya existe' });
-    
-    // Encriptar contraseña
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(contrasena, saltRounds);
-    
-    const usuario = await Usuario.create({ 
-      nombres, 
-      correo, 
-      contrasena: hashedPassword, 
-      rol_id, 
-      codigo 
+    const usuario = await Usuario.findByPk(req.params.id, {
+      include: [{ model: Rol, as: 'rol' }]
     });
-    res.status(201).json(usuario);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    res.json(usuario);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener usuario' });
   }
 };
 
 export const updateUsuario = async (req, res) => {
-  const { id } = req.params;
   try {
-    const usuario = await Usuario.findByPk(id);
-    if (!usuario) return res.status(404).json({ message: 'Usuario no encontrado' });
-    
-    // Si se está actualizando la contraseña, encriptarla
-    if (req.body.contrasena) {
-      const saltRounds = 10;
-      req.body.contrasena = await bcrypt.hash(req.body.contrasena, saltRounds);
+    const usuario = await Usuario.findByPk(req.params.id);
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
     }
-    
     await usuario.update(req.body);
     res.json(usuario);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al actualizar usuario' });
   }
 };
 
 export const deleteUsuario = async (req, res) => {
-  const { id } = req.params;
   try {
-    const usuario = await Usuario.findByPk(id);
-    if (!usuario) return res.status(404).json({ message: 'Usuario no encontrado' });
+    const usuario = await Usuario.findByPk(req.params.id);
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
     await usuario.destroy();
-    res.json({ message: 'Usuario eliminado' });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.json({ message: 'Usuario eliminado correctamente' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al eliminar usuario' });
   }
 }; 

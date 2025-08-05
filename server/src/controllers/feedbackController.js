@@ -110,35 +110,46 @@ export const updateFeedback = async (req, res) => {
       return res.status(404).json({ message: 'Feedback no encontrado' });
     }
 
-    // Validaciones
-    if (!usuario_id || !cancha_id) {
-      return res.status(400).json({ message: 'Usuario y cancha son obligatorios' });
-    }
+    // Verificar si es admin
+    const isAdmin = req.user.rol?.nombre === 'admin' || req.user.rol === 'admin';
 
-    // Validar que el usuario existe
-    const usuario = await Usuario.findByPk(usuario_id);
-    if (!usuario) {
-      return res.status(400).json({ message: 'El usuario especificado no existe' });
-    }
+    if (isAdmin) {
+      // Si es admin, solo permitir editar comentario y respuesta
+      await feedback.update({
+        comentario: comentario || null,
+        respuesta: respuesta || null
+      });
+    } else {
+      // Si no es admin, validar todos los campos
+      if (!usuario_id || !cancha_id) {
+        return res.status(400).json({ message: 'Usuario y cancha son obligatorios' });
+      }
 
-    // Validar que la cancha existe
-    const cancha = await Cancha.findByPk(cancha_id);
-    if (!cancha) {
-      return res.status(400).json({ message: 'La cancha especificada no existe' });
-    }
+      // Validar que el usuario existe
+      const usuario = await Usuario.findByPk(usuario_id);
+      if (!usuario) {
+        return res.status(400).json({ message: 'El usuario especificado no existe' });
+      }
 
-    // Validar calificación si se proporciona
-    if (calificacion && (calificacion < 1 || calificacion > 5)) {
-      return res.status(400).json({ message: 'La calificación debe estar entre 1 y 5' });
-    }
+      // Validar que la cancha existe
+      const cancha = await Cancha.findByPk(cancha_id);
+      if (!cancha) {
+        return res.status(400).json({ message: 'La cancha especificada no existe' });
+      }
 
-    await feedback.update({
-      usuario_id: parseInt(usuario_id),
-      cancha_id: parseInt(cancha_id),
-      comentario: comentario || null,
-      calificacion: calificacion ? parseInt(calificacion) : null,
-      respuesta: respuesta || null
-    });
+      // Validar calificación si se proporciona
+      if (calificacion && (calificacion < 1 || calificacion > 5)) {
+        return res.status(400).json({ message: 'La calificación debe estar entre 1 y 5' });
+      }
+
+      await feedback.update({
+        usuario_id: parseInt(usuario_id),
+        cancha_id: parseInt(cancha_id),
+        comentario: comentario || null,
+        calificacion: calificacion ? parseInt(calificacion) : null,
+        respuesta: respuesta || null
+      });
+    }
 
     const feedbackActualizado = await Feedback.findByPk(req.params.id, {
       include: [
@@ -156,16 +167,62 @@ export const updateFeedback = async (req, res) => {
 
 export const deleteFeedback = async (req, res) => {
   try {
-    const feedback = await Feedback.findByPk(req.params.id);
+    console.log('🗑️ Intentando eliminar feedback:', req.params.id);
+    console.log('👤 Usuario que solicita eliminación:', req.user);
+    
+    const feedback = await Feedback.findByPk(req.params.id, {
+      include: [
+        { model: Usuario, as: 'usuario' },
+        { model: Cancha, as: 'cancha' }
+      ]
+    });
+    
     if (!feedback) {
+      console.log('❌ Feedback no encontrado:', req.params.id);
       return res.status(404).json({ message: 'Feedback no encontrado' });
     }
 
+    console.log('📋 Feedback encontrado:', {
+      id: feedback.id,
+      usuario: feedback.usuario?.nombres,
+      cancha: feedback.cancha?.nombre,
+      fecha: feedback.fecha
+    });
+
+    // Intentar eliminar el feedback
     await feedback.destroy();
+    console.log('✅ Feedback eliminado exitosamente');
     res.json({ message: 'Feedback eliminado correctamente' });
+    
   } catch (error) {
-    console.error('Error al eliminar feedback:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    console.error('❌ Error al eliminar feedback:', error);
+    console.error('Detalles del error:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+    
+    // Detectar errores específicos de restricción de clave foránea
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return res.status(400).json({ 
+        message: 'No se puede eliminar el feedback. Puede estar asociado a dependencias.',
+        details: 'El feedback está referenciado por otras entidades del sistema.'
+      });
+    }
+    
+    // Detectar errores de restricción de verificación
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({ 
+        message: 'No se puede eliminar el feedback. Datos inválidos.',
+        details: error.message
+      });
+    }
+    
+    // Error genérico
+    res.status(500).json({ 
+      message: 'Error interno del servidor al eliminar el feedback',
+      details: process.env.NODE_ENV === 'development' ? error.message : 'Error interno'
+    });
   }
 };
 
@@ -197,6 +254,26 @@ export const responderFeedback = async (req, res) => {
     res.json(feedbackActualizado);
   } catch (error) {
     console.error('Error al responder feedback:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+export const getFeedbacksPorUsuario = async (req, res) => {
+  try {
+    const { usuarioId } = req.params;
+    
+    const feedbacks = await Feedback.findAll({
+      where: { usuario_id: usuarioId },
+      include: [
+        { model: Usuario, as: 'usuario', include: [{ model: Rol, as: 'rol' }] },
+        { model: Cancha, as: 'cancha', include: [{ model: TipoEspacio, as: 'tipoEspacio' }] }
+      ],
+      order: [['fecha', 'DESC']]
+    });
+    
+    res.json(feedbacks);
+  } catch (error) {
+    console.error('Error al obtener feedbacks por usuario:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 }; 

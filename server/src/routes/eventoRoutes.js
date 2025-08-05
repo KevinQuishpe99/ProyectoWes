@@ -5,16 +5,24 @@ import {
   createEvento, 
   updateEvento, 
   deleteEvento,
-  getEstadosEvento 
+  getEstadosEvento,
+  confirmarEventoConReservas
 } from '../controllers/eventoController.js';
+import { protect, requireOrganizador } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Rutas públicas (para mostrar eventos en landing page)
 router.get('/', getEventos);
 router.get('/estados-evento', getEstadosEvento);
 router.get('/:id', getEventoById);
-router.post('/', createEvento);
-router.put('/:id', updateEvento);
-router.delete('/:id', deleteEvento);
+
+// Rutas protegidas (admin y organizador)
+router.post('/', protect, createEvento);
+router.put('/:id', protect, updateEvento);
+router.delete('/:id', protect, deleteEvento);
+
+// Ruta para confirmar evento con cancelación de reservas conflictivas
+router.post('/confirmar-con-reservas', protect, confirmarEventoConReservas);
 
 export default router; 

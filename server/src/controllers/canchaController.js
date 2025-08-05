@@ -117,8 +117,21 @@ export const deleteCancha = async (req, res) => {
     const cancha = await Cancha.findByPk(id);
     if (!cancha) return res.status(404).json({ message: 'Cancha no encontrada' });
     await cancha.destroy();
-    res.json({ message: 'Cancha eliminada' });
+    res.json({ message: 'Cancha eliminada correctamente' });
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+};
+
+export const getEstadosCancha = async (req, res) => {
+  try {
+    const estados = await EstadoCancha.findAll({
+      attributes: ['id', 'nombre'],
+      order: [['nombre', 'ASC']]
+    });
+    res.json(estados);
+  } catch (error) {
+    console.error('Error al obtener estados de cancha:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 }; 

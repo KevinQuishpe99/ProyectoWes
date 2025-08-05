@@ -1,0 +1,177 @@
+:root {
+  /* Azules */
+  --color-primary: #2563eb;
+  --color-primary-dark: #1e40af;
+  --color-primary-light: #e0e7ff;
+  --color-primary-hover: #3b82f6;
+
+  /* Rojos */
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+
+  /* Grises y neutros */
+  --color-bg: #f3f4f6;
+  --color-border: #e5e7eb;
+  --color-text: #1e293b;
+  --color-white: #fff;
+  --color-black: #0f172a;
+
+  --font-main: 'Inter', Arial, sans-serif;
+  --font-title: 'Inter', Arial, sans-serif;
+}
+
+body {
+  background-color: var(--color-bg);
+  font-family: var(--font-main);
+}
+
+.panel-title, .card-title, h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.btn-editar {
+  background: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  border: none;
+  font-weight: 600;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-editar:hover, .btn-editar:focus {
+  background: var(--color-primary-hover) !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 2px 8px 0 rgba(37, 99, 235, 0.10);
+}
+
+.btn-eliminar {
+  background: var(--color-danger) !important;
+  color: var(--color-white) !important;
+  border: none;
+  font-weight: 600;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-eliminar:hover, .btn-eliminar:focus {
+  background: var(--color-danger-hover) !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 2px 8px 0 rgba(220, 38, 38, 0.10);
+}
+
+.sidebar-admin {
+  background: var(--color-primary);
+  min-height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  transition: min-width 0.3s ease;
+}
+
+.sidebar-collapsed {
+  min-width: 70px !important;
+  width: 70px !important;
+}
+
+.sidebar-open {
+  min-width: 280px !important;
+  width: 280px !important;
+}
+
+.main-content {
+  margin-left: 280px;
+  transition: margin-left 0.3s ease;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-collapsed + .main-content {
+  margin-left: 70px;
+}
+
+/* Animación para feedbacks pendientes */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 193, 7, 0.8);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+  }
+}
+
+/* Estilos para feedbacks pendientes */
+.feedback-pendiente {
+  border-left: 4px solid #ffc107 !important;
+  background: linear-gradient(90deg, rgba(255, 193, 7, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.feedback-pendiente:hover {
+  background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+/* Dashboard Dinámico - Estilos modernos tipo PowerBI */
+/* Efectos hover para las tarjetas de estadísticas */
+.hover-lift {
+  transition: all 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+}
+
+/* Animaciones para las gráficas */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Efectos para los filtros */
+.form-control:focus,
+.form-select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+}
+
+/* Estilos para tooltips mejorados */
+.recharts-tooltip-wrapper {
+  z-index: 1000;
+}
+
+/* Efectos para botones */
+.btn-outline-secondary:hover {
+  background-color: #6b7280;
+  border-color: #6b7280;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 1rem !important;
+  }
+
+  .display-6 {
+    font-size: 2rem !important;
+  }
+
+  h3 {
+    font-size: 1.5rem !important;
+  }
+} 

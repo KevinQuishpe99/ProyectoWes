@@ -1,20 +1,26 @@
 import { Sequelize } from 'sequelize';
+import dotenv from 'dotenv';
 
-// Cambia estos valores por los de tu base de datos real
-const sequelize = new Sequelize('gestion_canchas_epn', 'postgres', 'postgres', {
-  host: 'localhost',
-  dialect: 'postgres',
-  logging: false,
-});
+// Cargar variables de entorno
+dotenv.config();
 
-// 3. Sincronizar modelos (opcional, puedes comentar si solo quieres probar conexión)
-sequelize.sync()
-  .then(() => {
-    console.log('Base de datos sincronizada');
-  })
-  .catch((err) => {
-    console.log('Error al sincronizar la BDD', err);
-  });
+// Configuración de la base de datos desde variables de entorno
+const sequelize = new Sequelize(
+  process.env.DB_NAME || 'gestion_canchas_epn',
+  process.env.DB_USER || 'postgres',
+  process.env.DB_PASSWORD || 'postgres',
+  {
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 5432,
+    dialect: process.env.DB_DIALECT || 'postgres',
+    logging: false,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
+  }
+);
 
-// 4. Exportar la instancia de Sequelize
 export default sequelize; 

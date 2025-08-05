@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Variables de Entorno</title>
+</head>
+<body>
+    <h1>Test Variables de Entorno</h1>
+    <div id="result"></div>
+
+    <script type="module">
+        // Importar desde el archivo api.js para ver qué URL está usando
+        import api from './src/servicios/api.js';
+        
+        document.getElementById('result').innerHTML = `
+            <h2>Variables de Entorno:</h2>
+            <p><strong>VITE_API_BASE_URL:</strong> ${import.meta.env.VITE_API_BASE_URL || 'NO DEFINIDA'}</p>
+            <p><strong>API Base URL:</strong> ${api.defaults.baseURL || 'NO DEFINIDA'}</p>
+            <p><strong>URL Completa Login:</strong> ${api.defaults.baseURL}/usuarios/login-user</p>
+        `;
+    </script>
+</body>
+</html> 
