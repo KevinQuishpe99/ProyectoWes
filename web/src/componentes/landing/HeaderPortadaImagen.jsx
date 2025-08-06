@@ -11,14 +11,10 @@ export default function HeaderPortadaImagen() {
       display: 'inline-block',
     }}>
       <img
-        src="https://webhistorico.epn.edu.ec/wp-content/uploads/2017/07/1.8.jpg"
-        alt="Campus histórico de la Escuela Politécnica Nacional - EPN"
+        src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80"
+        alt="Espacios deportivos EPN"
         className="img-fluid rounded shadow"
-        style={{ 
-          maxHeight: 320,
-          objectFit: 'cover',
-          border: '4px solid #e0e7ff'
-        }}
+        style={{ maxHeight: 320, objectFit: 'cover', border: '4px solid #e0e7ff' }}
       />
     </div>
   );
