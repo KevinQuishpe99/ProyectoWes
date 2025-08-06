@@ -1,13 +1,17 @@
 /**
  * Utilidades para manejo de fechas y evitar problemas de zona horaria
+ * Este archivo contiene funciones para normalizar, formatear y validar fechas
+ * de manera consistente en toda la aplicación
  */
 
 /**
  * Normaliza una fecha para evitar problemas de zona horaria
+ * Convierte cualquier formato de fecha a YYYY-MM-DD
  * @param {string|Date} fecha - La fecha a normalizar
  * @returns {string} - Fecha en formato YYYY-MM-DD
  */
 export const normalizarFecha = (fecha) => {
+  // Si no hay fecha, retornar string vacío
   if (!fecha) return '';
   
   // Si la fecha ya viene en formato YYYY-MM-DD, devolverla tal como está
@@ -30,6 +34,7 @@ export const normalizarFecha = (fecha) => {
   const day = String(date.getUTCDate()).padStart(2, '0');
   const fechaNormalizada = `${year}-${month}-${day}`;
   
+  // Log para debugging de la normalización
   console.log('🔍 Normalización de fecha:', {
     fechaOriginal: fecha,
     fechaDate: date,
@@ -42,12 +47,15 @@ export const normalizarFecha = (fecha) => {
 
 /**
  * Normaliza una hora para el formato HH:MM
+ * Extrae solo las horas y minutos de cualquier formato de hora
  * @param {string} hora - La hora a normalizar
  * @returns {string} - Hora en formato HH:MM
  */
 export const normalizarHora = (hora) => {
+  // Si no hay hora, retornar string vacío
   if (!hora) return '';
   
+  // Log para debugging
   console.log('🔍 normalizarHora - Hora recibida:', hora, 'Tipo:', typeof hora);
   
   // Si es un string, extraer solo HH:MM
@@ -69,16 +77,19 @@ export const normalizarHora = (hora) => {
     return horaNormalizada;
   }
   
+  // Si no se pudo normalizar, retornar string vacío
   console.log('🔍 normalizarHora - No se pudo normalizar, devolviendo vacío');
   return '';
 };
 
 /**
  * Formatea una fecha para mostrar en la interfaz (formato largo)
+ * Convierte la fecha a formato legible en español
  * @param {string|Date} fecha - La fecha a formatear
  * @returns {string} - Fecha formateada (ej: "4 de agosto de 2025")
  */
 export const formatearFecha = (fecha) => {
+  // Si no hay fecha, retornar string vacío
   if (!fecha) return '';
   
   // Si la fecha viene como string YYYY-MM-DD, crear la fecha correctamente
@@ -87,6 +98,7 @@ export const formatearFecha = (fecha) => {
     // Crear fecha usando UTC para evitar problemas de zona horaria
     const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
     
+    // Opciones de formato para español
     const opciones = { 
       year: 'numeric', 
       month: 'long', 
@@ -100,6 +112,7 @@ export const formatearFecha = (fecha) => {
   const date = new Date(fecha);
   if (isNaN(date.getTime())) return '';
   
+  // Opciones de formato para español
   const opciones = { 
     year: 'numeric', 
     month: 'long', 
@@ -111,12 +124,15 @@ export const formatearFecha = (fecha) => {
 
 /**
  * Formatea una fecha en formato DD/MM/YYYY (formato corto)
+ * Convierte la fecha a formato numérico corto
  * @param {string|Date} fecha - La fecha a formatear
  * @returns {string} - Fecha formateada (ej: "04/08/2025")
  */
 export const formatearFechaCorta = (fecha) => {
+  // Si no hay fecha, retornar string vacío
   if (!fecha) return '';
   
+  // Log para debugging
   console.log('🔍 formatearFechaCorta - Fecha recibida:', fecha, 'Tipo:', typeof fecha);
   
   // Si la fecha viene como string YYYY-MM-DD
@@ -140,6 +156,8 @@ export const formatearFechaCorta = (fecha) => {
   const year = date.getUTCFullYear();
   
   const resultado = `${day}/${month}/${year}`;
+  
+  // Log para debugging
   console.log('🔍 formatearFechaCorta - Fecha procesada con UTC:', {
     fechaOriginal: fecha,
     fechaDate: date,
@@ -152,11 +170,14 @@ export const formatearFechaCorta = (fecha) => {
 
 /**
  * Verifica si una fecha es válida
+ * Comprueba que la fecha sea un valor válido
  * @param {string|Date} fecha - La fecha a verificar
  * @returns {boolean} - true si la fecha es válida
  */
 export const esFechaValida = (fecha) => {
+  // Si no hay fecha, retornar false
   if (!fecha) return false;
+  // Crear objeto Date y verificar si es válido
   const date = new Date(fecha);
   return !isNaN(date.getTime());
 }; 
