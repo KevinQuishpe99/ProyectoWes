@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // URL base del servidor backend
-const apiUrl = 'http://192.168.100.9:3001/api';
+const apiUrl = 'http://192.168.122.227:3001/api';
 
 // Crear instancia de Axios con configuración personalizada
 const api = axios.create({

@@ -4,7 +4,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // URL base del servidor backend
-const API_BASE_URL = 'http://192.168.100.9:3000/api';
+const API_BASE_URL = 'http://192.168.122.227:3001/api';
 // Tiempo de espera para las peticiones HTTP (en milisegundos)
 const HTTP_TIMEOUT = 10000; // 10 segundos
 
