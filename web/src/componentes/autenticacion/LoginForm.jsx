@@ -78,9 +78,17 @@ export default function LoginForm() {
         
         {/* Encabezado del formulario */}
         <div className="text-center mb-4">
-          {/* Ícono del sistema */}
+          {/* Logo de la EPN */}
           <div className="mb-3">
-            <span className="display-4 text-primary"><i className="bi bi-building"></i></span>
+            <img 
+              src="/epn_logo.png" 
+              alt="Logo EPN" 
+              style={{ 
+                height: '60px', 
+                width: 'auto',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+              }}
+            />
           </div>
           {/* Título del formulario */}
           <h2 className="h3 mb-2">Iniciar Sesión</h2>

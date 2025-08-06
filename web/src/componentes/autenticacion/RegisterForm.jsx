@@ -64,7 +64,15 @@ export default function RegisterForm() {
         
         <div className="text-center mb-4">
           <div className="mb-3">
-            <span className="display-4 text-primary"><i className="bi bi-person-plus"></i></span>
+            <img 
+              src="/epn_logo.png" 
+              alt="Logo EPN" 
+              style={{ 
+                height: '60px', 
+                width: 'auto',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+              }}
+            />
           </div>
           <h2 className="h3 mb-2">Registrarse</h2>
           <p className="text-muted">Crea tu cuenta en el sistema de gestión de canchas EPN</p>
