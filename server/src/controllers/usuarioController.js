@@ -18,6 +18,14 @@ export const createUser = async (req, res) => {
     return res.status(400).json({ message: 'Missing fields, all are mandatory!' });
   }
 
+  // Validar que el correo tenga el dominio @epn.edu.ec
+  const emailRegex = /^[^\s@]+@epn\.edu\.ec$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ 
+      message: 'El correo electrónico debe tener el dominio @epn.edu.ec' 
+    });
+  }
+
   try {
     // Verificar si el usuario ya existe
     const userFound = await Usuario.findOne({ where: { correo: email } });
@@ -51,6 +59,7 @@ export const createUser = async (req, res) => {
       email: nuevoUsuario.correo,
       userName: nuevoUsuario.nombres,
       id: nuevoUsuario.id,
+      rol_id: nuevoUsuario.rol_id,
       token: token
     });
   } catch (error) {
@@ -63,6 +72,14 @@ export const createUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    
+    // Validar que el correo tenga el dominio @epn.edu.ec
+    const emailRegex = /^[^\s@]+@epn\.edu\.ec$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        message: 'El correo electrónico debe tener el dominio @epn.edu.ec' 
+      });
+    }
     
     // Buscar usuario por correo
     const userFound = await Usuario.findOne({
@@ -88,6 +105,7 @@ export const loginUser = async (req, res) => {
         userName: userFound.nombres,
         id: userFound.id,
         rol: userFound.rol?.nombre,
+        rol_id: userFound.rol_id,
         token: token
       });
     } else {
@@ -171,6 +189,17 @@ export const updateUsuario = async (req, res) => {
     if (!usuario) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
+
+    // Si se está actualizando el correo, validar el dominio
+    if (req.body.correo) {
+      const emailRegex = /^[^\s@]+@epn\.edu\.ec$/;
+      if (!emailRegex.test(req.body.correo)) {
+        return res.status(400).json({ 
+          message: 'El correo electrónico debe tener el dominio @epn.edu.ec' 
+        });
+      }
+    }
+
     await usuario.update(req.body);
     res.json(usuario);
   } catch (error) {

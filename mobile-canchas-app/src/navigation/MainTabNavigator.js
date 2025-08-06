@@ -74,7 +74,6 @@ const MainTabNavigator = ({ route }) => {
         <Tab.Screen 
           name="Perfil" 
           component={ProfileScreen}
-          initialParams={{ onAuthChange }}
           options={{
             title: 'Mi Perfil',
           }}

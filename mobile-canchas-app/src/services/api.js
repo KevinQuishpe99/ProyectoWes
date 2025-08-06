@@ -1,11 +1,13 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_CONFIG, STORAGE_KEYS } from '../config/constants';
+
+// Configuración de la API - URL base directa
+const API_BASE_URL = 'http://192.168.100.9:3001/api';
 
 // Crear instancia de axios
 const api = axios.create({
-  baseURL: API_CONFIG.BASE_URL,
-  timeout: API_CONFIG.TIMEOUT,
+  baseURL: API_BASE_URL,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -15,7 +17,7 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     try {
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.JWT);
+      const token = await AsyncStorage.getItem('jwtToken');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -38,8 +40,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token expirado o inválido
       try {
-        await AsyncStorage.removeItem(STORAGE_KEYS.JWT);
-        await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
+        await AsyncStorage.removeItem('jwtToken');
+        await AsyncStorage.removeItem('userData');
         console.log('Sesión expirada, redirigiendo a login');
       } catch (storageError) {
         console.error('Error al limpiar almacenamiento:', storageError);

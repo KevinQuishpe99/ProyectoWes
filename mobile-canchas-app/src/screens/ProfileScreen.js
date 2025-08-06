@@ -9,11 +9,12 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { authService } from '../services/authService';
+import { useAuth } from '../../App';
 
-const ProfileScreen = ({ navigation, route }) => {
+const ProfileScreen = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { onAuthChange } = route.params || {};
+  const { logout } = useAuth();
 
   const loadUserData = async () => {
     try {
@@ -43,17 +44,29 @@ const ProfileScreen = ({ navigation, route }) => {
           onPress: async () => {
             try {
               await authService.logout();
-              // Notificar cambio de autenticación
-              if (onAuthChange) {
-                onAuthChange(false);
-              }
+              // Usar el contexto para cambiar el estado de autenticación
+              logout();
             } catch (error) {
               console.error('Error en logout:', error);
+              // Forzar logout incluso si hay error
+              logout();
             }
           }
         }
       ]
     );
+  };
+
+  const formatUserData = (data) => {
+    if (!data) return null;
+    
+    return {
+      nombre: data.nombres || data.userName || 'Usuario',
+      email: data.correo || data.email || 'email@ejemplo.com',
+      codigo: data.codigo || 'N/A',
+      rol: 'Estudiante',
+      id: data.id || 'N/A'
+    };
   };
 
   if (loading) {
@@ -65,6 +78,8 @@ const ProfileScreen = ({ navigation, route }) => {
     );
   }
 
+  const userInfo = formatUserData(userData);
+
   return (
     <View style={styles.container}>
       <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
@@ -72,10 +87,20 @@ const ProfileScreen = ({ navigation, route }) => {
           <View style={styles.avatarContainer}>
             <Text style={styles.avatar}>👤</Text>
           </View>
-          <Text style={styles.userName}>{userData?.userName || userData?.nombres || 'Usuario'}</Text>
-          <Text style={styles.userEmail}>{userData?.email || userData?.correo || 'email@ejemplo.com'}</Text>
-          <Text style={styles.userCode}>Código: {userData?.codigo || 'N/A'}</Text>
-          <Text style={styles.userRole}>Estudiante</Text>
+          <Text style={styles.userName}>{userInfo?.nombre}</Text>
+          <Text style={styles.userEmail}>{userInfo?.email}</Text>
+          <Text style={styles.userCode}>Código: {userInfo?.codigo}</Text>
+          <Text style={styles.userRole}>{userInfo?.rol}</Text>
+          <Text style={styles.userId}>ID: {userInfo?.id}</Text>
+        </View>
+
+        <View style={styles.infoSection}>
+          <View style={styles.infoCard}>
+            <Text style={styles.infoTitle}>Información de la Cuenta</Text>
+            <Text style={styles.infoText}>
+              Tu cuenta está activa y puedes acceder a todas las funcionalidades de la aplicación móvil.
+            </Text>
+          </View>
         </View>
 
         <View style={styles.menuSection}>
@@ -152,14 +177,47 @@ const styles = StyleSheet.create({
     color: '#7f8c8d',
     marginBottom: 8,
   },
-  userRole: {
+  userCode: {
     fontSize: 14,
     color: '#95a5a6',
     marginBottom: 4,
   },
-  userCode: {
+  userRole: {
     fontSize: 14,
-    color: '#95a5a6',
+    color: '#27ae60',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  userId: {
+    fontSize: 12,
+    color: '#bdc3c7',
+  },
+  infoSection: {
+    marginBottom: 20,
+  },
+  infoCard: {
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: 10,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#7f8c8d',
+    lineHeight: 20,
   },
   menuSection: {
     backgroundColor: '#fff',

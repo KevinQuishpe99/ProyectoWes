@@ -63,7 +63,6 @@ const SERVER_IP = process.env.SERVER_IP || '0.0.0.0';
     
     app.listen(PORT, SERVER_IP, () => {
       console.log(`🚀 Servidor corriendo en ${SERVER_IP}:${PORT}`);
-      console.log(`🌐 Web: http://localhost:5173`);
       console.log(`📱 API: http://${SERVER_IP}:${PORT}/api`);
     });
   } catch (error) {

@@ -13,40 +13,83 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { authService } from '../services/authService';
+import { useAuth } from '../../App';
 
-const RegisterScreen = ({ navigation, route }) => {
+const RegisterScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
     userName: '',
     email: '',
-    password: '',
     codigo: '',
+    password: '',
   });
   const [loading, setLoading] = useState(false);
-  const { onAuthChange } = route.params || {};
+  const [errors, setErrors] = useState({});
+  const { login } = useAuth();
 
-  const handleRegister = async () => {
-    const { userName, email, password, codigo } = formData;
-    
-    if (!userName || !email || !password || !codigo) {
-      Alert.alert('Error', 'Por favor completa todos los campos');
-      return;
+  // Validaciones simplificadas
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Validar nombre
+    if (!formData.userName.trim()) {
+      newErrors.userName = 'El nombre es obligatorio';
+    } else if (formData.userName.trim().length < 2) {
+      newErrors.userName = 'El nombre debe tener al menos 2 caracteres';
     }
 
-    if (password.length < 6) {
-      Alert.alert('Error', 'La contraseña debe tener al menos 6 caracteres');
+    // Validar email con dominio @epn.edu.ec
+    const emailRegex = /^[^\s@]+@epn\.edu\.ec$/;
+    if (!formData.email.trim()) {
+      newErrors.email = 'El email es obligatorio';
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = 'El email debe tener el dominio @epn.edu.ec';
+    }
+
+    // Validar código
+    if (!formData.codigo.trim()) {
+      newErrors.codigo = 'El código es obligatorio';
+    } else if (formData.codigo.trim().length < 3) {
+      newErrors.codigo = 'El código debe tener al menos 3 caracteres';
+    }
+
+    // Validar contraseña (simplificada)
+    if (!formData.password) {
+      newErrors.password = 'La contraseña es obligatoria';
+    } else if (formData.password.length < 4) {
+      newErrors.password = 'La contraseña debe tener al menos 4 caracteres';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleRegister = async () => {
+    if (!validateForm()) {
+      Alert.alert('Error de Validación', 'Por favor corrige los errores en el formulario');
       return;
     }
 
     setLoading(true);
     try {
       const response = await authService.register(formData);
-      Alert.alert('Éxito', 'Usuario registrado exitosamente');
-      // Notificar cambio de autenticación
-      if (onAuthChange) {
-        onAuthChange(true);
-      }
+      
+      // Usar el contexto para cambiar el estado de autenticación
+      login();
+      
+      Alert.alert(
+        '¡Registro Exitoso!', 
+        'Tu cuenta ha sido creada correctamente.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // La navegación se manejará automáticamente por el estado de autenticación
+            }
+          }
+        ]
+      );
     } catch (error) {
-      Alert.alert('Error', error.message || 'Error al registrar usuario');
+      Alert.alert('Error en el Registro', error.message || 'Error al registrar usuario');
     } finally {
       setLoading(false);
     }
@@ -54,7 +97,27 @@ const RegisterScreen = ({ navigation, route }) => {
 
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Limpiar error del campo cuando el usuario empiece a escribir
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: null }));
+    }
   };
+
+  const renderInput = (field, label, placeholder, options = {}) => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        style={[styles.input, errors[field] && styles.inputError]}
+        placeholder={placeholder}
+        value={formData[field]}
+        onChangeText={(value) => updateFormData(field, value)}
+        {...options}
+      />
+      {errors[field] && (
+        <Text style={styles.errorText}>{errors[field]}</Text>
+      )}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -67,51 +130,41 @@ const RegisterScreen = ({ navigation, route }) => {
             <Text style={styles.title}>Canchas EPN</Text>
             <Text style={styles.subtitle}>Registro de Estudiante</Text>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Nombre Completo</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Ingresa tu nombre completo"
-                value={formData.userName}
-                onChangeText={(value) => updateFormData('userName', value)}
-                autoCapitalize="words"
-              />
+            {renderInput('userName', 'Nombre Completo', 'Ingresa tu nombre completo', {
+              autoCapitalize: 'words',
+              autoCorrect: false,
+            })}
+
+            {renderInput('email', 'Email EPN', 'Ingresa tu email @epn.edu.ec', {
+              keyboardType: 'email-address',
+              autoCapitalize: 'none',
+              autoCorrect: false,
+            })}
+
+            {renderInput('codigo', 'Código de Estudiante', 'Ingresa tu código', {
+              autoCapitalize: 'characters',
+              autoCorrect: false,
+            })}
+
+            {renderInput('password', 'Contraseña', 'Ingresa tu contraseña', {
+              secureTextEntry: true,
+              autoCapitalize: 'none',
+              autoCorrect: false,
+            })}
+
+            <View style={styles.passwordRequirements}>
+              <Text style={styles.requirementsTitle}>La contraseña debe contener:</Text>
+              <Text style={styles.requirement}>• Al menos 4 caracteres</Text>
+              <Text style={styles.requirement}>• Puede ser cualquier combinación</Text>
             </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Ingresa tu email"
-                value={formData.email}
-                onChangeText={(value) => updateFormData('email', value)}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Código de Estudiante</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Ingresa tu código de estudiante"
-                value={formData.codigo}
-                onChangeText={(value) => updateFormData('codigo', value)}
-                autoCapitalize="characters"
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Contraseña</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Ingresa tu contraseña"
-                value={formData.password}
-                onChangeText={(value) => updateFormData('password', value)}
-                secureTextEntry
-                autoCapitalize="none"
-              />
+            <View style={styles.roleInfo}>
+              <Text style={styles.roleInfoText}>
+                📱 Esta aplicación es exclusiva para estudiantes de la EPN
+              </Text>
+              <Text style={styles.roleInfoText}>
+                📧 Solo se permiten correos con dominio @epn.edu.ec
+              </Text>
             </View>
 
             <TouchableOpacity
@@ -122,7 +175,7 @@ const RegisterScreen = ({ navigation, route }) => {
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.buttonText}>Registrarse</Text>
+                <Text style={styles.buttonText}>Registrarse como Estudiante</Text>
               )}
             </TouchableOpacity>
 
@@ -197,6 +250,47 @@ const styles = StyleSheet.create({
     padding: 15,
     fontSize: 16,
     backgroundColor: '#fafafa',
+  },
+  inputError: {
+    borderColor: '#e74c3c',
+    backgroundColor: '#fdf2f2',
+  },
+  errorText: {
+    color: '#e74c3c',
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 5,
+  },
+  passwordRequirements: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 20,
+  },
+  requirementsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#495057',
+    marginBottom: 8,
+  },
+  requirement: {
+    fontSize: 12,
+    color: '#6c757d',
+    marginBottom: 2,
+  },
+  roleInfo: {
+    backgroundColor: '#e3f2fd',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: '#2196f3',
+  },
+  roleInfoText: {
+    fontSize: 14,
+    color: '#1976d2',
+    textAlign: 'center',
+    fontWeight: '500',
   },
   button: {
     backgroundColor: '#27ae60',

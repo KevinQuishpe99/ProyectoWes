@@ -13,33 +13,93 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { authService } from '../services/authService';
+import { useAuth } from '../../App';
 
-const LoginScreen = ({ navigation, route }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const LoginScreen = ({ navigation }) => {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
   const [loading, setLoading] = useState(false);
-  const { onAuthChange } = route.params || {};
+  const [errors, setErrors] = useState({});
+  const { login } = useAuth();
+
+  // Validaciones
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Validar email con dominio @epn.edu.ec
+    const emailRegex = /^[^\s@]+@epn\.edu\.ec$/;
+    if (!formData.email.trim()) {
+      newErrors.email = 'El email es obligatorio';
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = 'El email debe tener el dominio @epn.edu.ec';
+    }
+
+    // Validar contraseña
+    if (!formData.password) {
+      newErrors.password = 'La contraseña es obligatoria';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Por favor completa todos los campos');
+    if (!validateForm()) {
+      Alert.alert('Error de Validación', 'Por favor corrige los errores en el formulario');
       return;
     }
 
     setLoading(true);
     try {
-      const response = await authService.login(email, password);
-      Alert.alert('Éxito', 'Inicio de sesión exitoso');
-      // Notificar cambio de autenticación
-      if (onAuthChange) {
-        onAuthChange(true);
-      }
+      const response = await authService.login(formData.email, formData.password);
+      
+      // Usar el contexto para cambiar el estado de autenticación
+      login();
+      
+      Alert.alert(
+        '¡Bienvenido!', 
+        'Has iniciado sesión correctamente.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // La navegación se manejará automáticamente por el estado de autenticación
+            }
+          }
+        ]
+      );
     } catch (error) {
-      Alert.alert('Error', error.message || 'Error al iniciar sesión');
+      Alert.alert('Error en el Login', error.message || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
   };
+
+  const updateFormData = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Limpiar error del campo cuando el usuario empiece a escribir
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: null }));
+    }
+  };
+
+  const renderInput = (field, label, placeholder, options = {}) => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        style={[styles.input, errors[field] && styles.inputError]}
+        placeholder={placeholder}
+        value={formData[field]}
+        onChangeText={(value) => updateFormData(field, value)}
+        {...options}
+      />
+      {errors[field] && (
+        <Text style={styles.errorText}>{errors[field]}</Text>
+      )}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -52,30 +112,17 @@ const LoginScreen = ({ navigation, route }) => {
             <Text style={styles.title}>Canchas EPN</Text>
             <Text style={styles.subtitle}>Iniciar Sesión</Text>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Ingresa tu email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
+            {renderInput('email', 'Email EPN', 'Ingresa tu email @epn.edu.ec', {
+              keyboardType: 'email-address',
+              autoCapitalize: 'none',
+              autoCorrect: false,
+            })}
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Contraseña</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Ingresa tu contraseña"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-              />
-            </View>
+            {renderInput('password', 'Contraseña', 'Ingresa tu contraseña', {
+              secureTextEntry: true,
+              autoCapitalize: 'none',
+              autoCorrect: false,
+            })}
 
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
@@ -88,6 +135,12 @@ const LoginScreen = ({ navigation, route }) => {
                 <Text style={styles.buttonText}>Iniciar Sesión</Text>
               )}
             </TouchableOpacity>
+
+            <View style={styles.infoContainer}>
+              <Text style={styles.infoText}>
+                Solo estudiantes de la EPN pueden acceder a la aplicación móvil
+              </Text>
+            </View>
 
             <TouchableOpacity
               style={styles.linkButton}
@@ -161,6 +214,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#fafafa',
   },
+  inputError: {
+    borderColor: '#e74c3c',
+    backgroundColor: '#fdf2f2',
+  },
+  errorText: {
+    color: '#e74c3c',
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 5,
+  },
   button: {
     backgroundColor: '#3498db',
     borderRadius: 8,
@@ -175,6 +238,19 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  infoContainer: {
+    backgroundColor: '#e8f4fd',
+    borderRadius: 8,
+    padding: 15,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  infoText: {
+    fontSize: 12,
+    color: '#2980b9',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   linkButton: {
     marginTop: 20,
